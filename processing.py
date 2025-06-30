@@ -97,8 +97,8 @@ def process_youtube_video(url):
     # Inject ffmpeg into PATH for Whisper
     # Uncomment the following two lines if you need to set a specific ffmpeg path
     # Comment out the following two lines if using Docker or if ffmpeg is already in PATH
-    ffmpeg_bin = r"Z:\\ffmpeg\\ffmpeg-7.1.1-essentials_build\\bin"
-    os.environ["PATH"] = ffmpeg_bin + os.pathsep + os.environ["PATH"]
+    # ffmpeg_bin = r"Z:\\ffmpeg\\ffmpeg-7.1.1-essentials_build\\bin"
+    # os.environ["PATH"] = ffmpeg_bin + os.pathsep + os.environ["PATH"]
 
     # Confirm ffmpeg is visible to subprocesses
     ffmpeg_path = shutil.which("ffmpeg")

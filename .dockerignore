@@ -1,0 +1,22 @@
+# Ignore these files/directories during Docker build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.git/
+.gitignore
+README.md
+.env
+.venv/
+venv/
+*.txt
+!requirements.txt
+*.log
+.DS_Store
+Thumbs.db
+transcripts/
+*.webm
+*.m4a
+*.mp3
