@@ -184,8 +184,8 @@ def process_youtube_video(url):
     # transcript = result["segments"]
 
     # Inject ffmpeg into PATH for Whisper
-    ffmpeg_bin = r"Z:\\ffmpeg\\ffmpeg-7.1.1-essentials_build\\bin"
-    os.environ["PATH"] = ffmpeg_bin + os.pathsep + os.environ["PATH"]
+    # ffmpeg_bin = r"Z:\\ffmpeg\\ffmpeg-7.1.1-essentials_build\\bin"
+    # os.environ["PATH"] = ffmpeg_bin + os.pathsep + os.environ["PATH"]
 
     # Confirm ffmpeg is visible to subprocesses
     ffmpeg_path = shutil.which("ffmpeg")
