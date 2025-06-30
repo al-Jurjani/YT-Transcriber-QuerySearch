@@ -1,98 +1,6 @@
 # # Bismillah
 # # Started on: 01-01-1447 - 2023-10-01
 
-# import os
-# import tempfile
-# import torch
-# from pytube import YouTube
-# from whisper import load_model
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
-# from transformers import AutoTokenizer, AutoModel
-# from sklearn.metrics.pairwise import cosine_similarity
-# import faiss
-# import numpy as np
-
-# # Globals
-# TRANSCRIPT_FILE = "transcript.txt"
-# CHUNKS = []
-# EMBEDDINGS = []
-# INDEX = None
-# MODEL_NAME = "BAAI/bge-small-en"
-# tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-# model = AutoModel.from_pretrained(MODEL_NAME)
-
-
-# def process_youtube_video(url):
-#     # Step 1: Download Audio
-#     # yt = YouTube(url)
-#     # stream = yt.streams.filter(only_audio=True).first()
-
-#     try:
-#         yt = YouTube(url)
-#         VIDEO_TITLE = yt.title.replace(" ", "_").replace("/", "_")  # Clean title for file naming
-#         TRANSCRIPT_FILE = f"{VIDEO_TITLE}___transcript.txt"
-#         stream = yt.streams.filter(only_audio=True).first()
-#         if stream is None:
-#             raise Exception("No downloadable audio stream found.")
-#     except Exception as e:
-#         raise Exception(f"Failed to load or download video: {e}")
-
-
-#     temp_dir = tempfile.mkdtemp()
-#     audio_path = stream.download(output_path=temp_dir, filename="audio.mp3")
-
-#     # Step 2: Transcribe using Whisper
-#     whisper_model = load_model("base")  # or 'medium' if you want more accuracy
-#     print("Transcribing audio...")
-#     result = whisper_model.transcribe(audio_path)
-#     print("Transcription completed!")
-#     transcript = result["segments"]  # each segment has 'start', 'end', 'text'
-
-#     # Save transcript to file
-#     with open(TRANSCRIPT_FILE, "w", encoding="utf-8") as f:
-#         for seg in transcript:
-#             f.write(f"[{seg['start']:.2f}] {seg['text']}\n")
-
-#     # Step 3: Chunking
-#     text_splitter = RecursiveCharacterTextSplitter(chunk_size=256, chunk_overlap=50)
-#     for seg in transcript:
-#         chunks = text_splitter.split_text(seg['text'])
-#         for chunk in chunks:
-#             CHUNKS.append({
-#                 "text": chunk,
-#                 "timestamp": f"{seg['start']:.2f}"
-#             })
-
-#     # Step 4: Embedding and FAISS Indexing
-#     embeddings = get_embeddings([chunk['text'] for chunk in CHUNKS])
-#     global INDEX
-#     INDEX = faiss.IndexFlatL2(embeddings.shape[1])
-#     INDEX.add(embeddings)
-#     global EMBEDDINGS
-#     EMBEDDINGS = embeddings
-
-#     return open(TRANSCRIPT_FILE, "rb"), CHUNKS
-
-
-# def get_embeddings(texts):
-#     with torch.no_grad():
-#         tokens = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
-#         outputs = model(**tokens)
-#         embeddings = outputs.last_hidden_state[:, 0, :].numpy()
-#     return embeddings.astype("float32")
-
-
-# def search_query_in_transcript(query, top_k=5):
-#     query_emb = get_embeddings([query])[0].reshape(1, -1)
-#     D, I = INDEX.search(query_emb, top_k)
-
-#     results = []
-#     for idx in I[0]:
-#         if idx < len(CHUNKS):
-#             results.append(CHUNKS[idx])
-
-#     return results
-
 import os
 import tempfile
 import torch
@@ -108,7 +16,6 @@ from yt_dlp import YoutubeDL
 import datetime
 
 # Globals
-# TRANSCRIPT_FILE = "transcript.txt"
 CHUNKS = []
 EMBEDDINGS = []
 INDEX = None
@@ -150,6 +57,19 @@ def get_embeddings(texts):
 def seconds_to_hhmmss(seconds):
     return str(datetime.timedelta(seconds=int(seconds)))
 
+# def l2_to_similarity_score(l2_distance):
+#     """Convert L2 distance to a similarity score between 0-1 (1 being most similar)"""
+#     # Using exponential decay to convert distance to similarity
+#     # You can adjust the scale factor (0.5) based on your preference
+#     return np.exp(-l2_distance * 0.5)
+
+def cosine_similarity_score(query_embedding, chunk_embedding):
+    """Calculate cosine similarity between query and chunk embeddings"""
+    # Reshape to 2D arrays for sklearn
+    query_emb = query_embedding.reshape(1, -1)
+    chunk_emb = chunk_embedding.reshape(1, -1)
+    return cosine_similarity(query_emb, chunk_emb)[0][0]
+
 # Main Functions
 def process_youtube_video(url):
     # Step 1: Download Audio using yt-dlp (raw format, no ffmpeg)
@@ -174,18 +94,11 @@ def process_youtube_video(url):
     VIDEO_TITLE = info.get('title', 'video').replace(" ", "_").replace("/", "_")
     TRANSCRIPT_FILE = f"{VIDEO_TITLE}___transcript.txt"
 
-    # # Step 2: Transcribe using Whisper
-    # whisper_model = whisper.load_model("base")
-    # result = whisper_model.transcribe(final_audio_path)
-    # transcript = result["segments"]
-
-    # whisper_model = whisper.load_model("base")
-    # result = whisper_model.transcribe(final_audio_path)
-    # transcript = result["segments"]
-
     # Inject ffmpeg into PATH for Whisper
-    # ffmpeg_bin = r"Z:\\ffmpeg\\ffmpeg-7.1.1-essentials_build\\bin"
-    # os.environ["PATH"] = ffmpeg_bin + os.pathsep + os.environ["PATH"]
+    # Uncomment the following two lines if you need to set a specific ffmpeg path
+    # Comment out the following two lines if using Docker or if ffmpeg is already in PATH
+    ffmpeg_bin = r"Z:\\ffmpeg\\ffmpeg-7.1.1-essentials_build\\bin"
+    os.environ["PATH"] = ffmpeg_bin + os.pathsep + os.environ["PATH"]
 
     # Confirm ffmpeg is visible to subprocesses
     ffmpeg_path = shutil.which("ffmpeg")
@@ -216,14 +129,6 @@ def process_youtube_video(url):
                 "timestamp": timestamp
             })
 
-    # Step 4: Embedding and FAISS Indexing
-    # embeddings = get_embeddings([chunk['text'] for chunk in CHUNKS])
-    # global INDEX
-    # INDEX = faiss.IndexFlatL2(embeddings.shape[1])
-    # INDEX.add(embeddings)
-    # global EMBEDDINGS
-    # EMBEDDINGS = embeddings
-
     # Convert all chunks to embeddings
     all_texts = [chunk['text'] for chunk in CHUNKS]
     embeddings = get_embeddings(all_texts)
@@ -236,16 +141,27 @@ def process_youtube_video(url):
     global EMBEDDINGS
     EMBEDDINGS = embeddings
 
-    return open(TRANSCRIPT_FILE, "rb"), VIDEO_TITLE, CHUNKS, INDEX
+    return open(TRANSCRIPT_FILE, "rb"), VIDEO_TITLE, CHUNKS, INDEX, EMBEDDINGS
 
 
-def search_query_in_transcript(query, index, chunks, top_k=5):
+def search_query_in_transcript(query, index, chunks, embeddings, top_k=5):
     query_vector = get_embeddings([query])[0].reshape(1, -1)
-    D, I = index.search(query_vector, top_k)
+    D, I = index.search(query_vector, top_k) # calculates the distances and indices of the top_k nearest neighbors based on L2 distance
 
     results = []
-    for idx in I[0]:
+    for i, idx in enumerate(I[0]):
         if idx < len(chunks):
-            results.append(chunks[idx])
-
+            l2_distance = D[0][i]  # L2 distance from FAISS
+            # similarity_score = l2_to_similarity_score(l2_distance)  # Convert to 0-1 scale
+            cosine_sim = cosine_similarity_score(query_vector[0], embeddings[idx])  # Cosine similarity
+            
+            result = {
+                "text": chunks[idx]['text'],
+                "timestamp": chunks[idx]['timestamp'],
+                "l2_distance": float(l2_distance),
+                # "similarity_score": float(similarity_score),
+                "cosine_similarity": float(cosine_sim)
+            }
+            results.append(result)
+    
     return results
