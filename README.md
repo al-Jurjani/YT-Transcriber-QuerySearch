@@ -84,3 +84,13 @@ http://localhost:8501
 ```
 
 > 💡 **Note:** The app may take a few minutes to start on the first run because it loads machine learning models.
+
+Alternatively, you can download the .tar file from the repo, then load it like this:
+```bash
+docker load -i yt_tqs_zuhair.tar
+```
+
+Then you can run the code like this
+```bash
+docker run -p 8501:8501 yt_tqs_zuhair
+```
