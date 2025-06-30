@@ -57,3 +57,30 @@ Follow these steps to run the project locally.
 ```bash
 git clone https://github.com/al-Jurjani/YT-Transcriber-QuerySearch.git
 cd YT-Transcriber-QuerySearch
+```
+
+### 2. Running with Docker
+
+If you don't want to set up Python and dependencies locally, you can run the entire app using Docker.
+
+### 🔧 Step 1: Build the Docker Image
+
+From the root of the project directory (where the `Dockerfile` is located):
+
+```bash
+docker build -t yt_transcriber .
+```
+
+### ▶️ Step 2: Run the App
+
+```bash
+docker run -p 8501:8501 yt_transcriber
+```
+
+Then open your browser and go to:
+
+```
+http://localhost:8501
+```
+
+> 💡 **Note:** The app may take a few minutes to start on the first run because it loads machine learning models.
